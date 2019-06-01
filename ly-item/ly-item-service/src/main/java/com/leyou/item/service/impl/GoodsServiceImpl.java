@@ -2,15 +2,20 @@ package com.leyou.item.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.leyou.common.enums.ExceptionEnum;
 import com.leyou.common.exception.LyException;
+import com.leyou.common.pojo.BrandQueryByPageParameter;
 import com.leyou.common.pojo.SpuQueryByPageParameter;
 import com.leyou.common.vo.PageResult;
+import com.leyou.item.bo.SkuBo;
 import com.leyou.item.bo.SpuBo;
+import com.leyou.item.bo.StockBo;
 import com.leyou.item.mapper.*;
 import com.leyou.item.pojo.*;
 import com.leyou.item.service.CategoryService;
 import com.leyou.item.service.GoodsService;
+import com.leyou.member.pojo.Member;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +51,8 @@ public class GoodsServiceImpl implements GoodsService {
     private SkuMapper skuMapper;
     @Autowired
     private StockMapper stockMapper;
+    @Autowired
+    private PurchaseMapper purchaseMapper;
 
     /**
       * @Description 分页查询
@@ -92,6 +99,35 @@ public class GoodsServiceImpl implements GoodsService {
             return spuBo;
         }).collect(Collectors.toList());
         return new PageResult<>(pageInfo.getTotal(),list);
+    }
+
+    @Override
+    public PageResult<SkuBo> querySkuByPage(BrandQueryByPageParameter brandQueryByPageParameter) {
+        //1.查询spu，分页查询，最多查询100条记录
+        PageHelper.startPage(brandQueryByPageParameter.getPage(), Math.min(brandQueryByPageParameter.getRows(),100));
+        //2.创建查询条件
+        Example example = new Example(Sku.class);
+        Example.Criteria criteria = example.createCriteria();
+        //3.2是否模糊查询
+        if(StringUtils.isNotBlank(brandQueryByPageParameter.getKey())){
+            criteria.andLike("title","%" + brandQueryByPageParameter.getKey() + "%");
+        }
+        //3.3是否排序
+        if(StringUtils.isNotBlank(brandQueryByPageParameter.getSortBy())){
+            example.setOrderByClause(brandQueryByPageParameter.getSortBy()+(brandQueryByPageParameter.getDesc()? " DESC":" ASC"));
+        }
+        List<Sku> lists = skuMapper.selectByExample(example);
+        PageInfo<Sku> info = new PageInfo<>(lists);
+        List<SkuBo> skuBos = new ArrayList<>();
+        for(Sku sku:lists){
+            SkuBo skuBo = new SkuBo();
+            skuBo.setId(sku.getId());
+            skuBo.setTitle(sku.getTitle());
+            skuBo.setPrice(sku.getPrice());
+            skuBo.setStock(stockMapper.selectByPrimaryKey(sku.getId()).getStock());
+            skuBos.add(skuBo);
+        }
+        return new PageResult<>(info.getTotal(),skuBos);
     }
 
     /**
@@ -258,6 +294,74 @@ public class GoodsServiceImpl implements GoodsService {
             skuMapper.deleteByPrimaryKey(sku.getId());
             stockMapper.deleteByPrimaryKey(sku.getId());
         }
+    }
+
+    @Override
+    public List<SkuBo> lessSku() {
+        List<StockBo> stocks = stockMapper.lessStock();
+        List<SkuBo> skuBos = new ArrayList<>();
+        for(StockBo stock:stocks){
+            SkuBo skuBo = new SkuBo();
+            Sku sku = skuMapper.query(stock.getSku_Id());
+            skuBo.setId(stock.getSku_Id());
+            skuBo.setTitle(sku.getTitle());
+            skuBo.setPrice(sku.getPrice());
+            skuBo.setStock(stock.getStock());
+            skuBos.add(skuBo);
+        }
+        return skuBos;
+    }
+
+    @Override
+    public List<SkuBo> notSku() {
+        List<StockBo> stockBos = stockMapper.notStock();
+        List<SkuBo> skuBos = new ArrayList<>();
+        for(StockBo stockBo:stockBos){
+            SkuBo skuBo = new SkuBo();
+            Sku sku = skuMapper.query(stockBo.getSku_Id());
+            skuBo.setId(stockBo.getSku_Id());
+            skuBo.setTitle(sku.getTitle());
+            skuBo.setPrice(sku.getPrice());
+            skuBo.setStock(stockBo.getStock());
+            skuBos.add(skuBo);
+        }
+        return skuBos;
+    }
+
+    @Override
+    public List<SkuBo> needSku() {
+        List<StockBo> stockBos = stockMapper.needStock();
+        List<SkuBo> skuBos = new ArrayList<>();
+        for(StockBo stockBo:stockBos){
+            SkuBo skuBo = new SkuBo();
+            Sku sku = skuMapper.query(stockBo.getSku_Id());
+            skuBo.setId(stockBo.getSku_Id());
+            skuBo.setTitle(sku.getTitle());
+            skuBo.setPrice(sku.getPrice());
+            skuBo.setStock(stockBo.getStock());
+            skuBos.add(skuBo);
+        }
+        return skuBos;
+    }
+
+    @Override
+    public SkuBo getSkuBo(Long id) {
+        SkuBo skuBo = new SkuBo();
+        skuBo.setId(id);
+        skuBo.setTitle(skuMapper.selectByPrimaryKey(id).getTitle());
+        return skuBo;
+    }
+
+    @Override
+    public void addPurchase(Long id, Long amount) {
+        Purchase purchase = new Purchase();
+        purchase.setSkuId(id);
+        purchase.setAmount(amount);
+        purchase.setCreateTime(new Date());
+        purchaseMapper.insert(purchase);
+        Stock stock = stockMapper.selectByPrimaryKey(id);
+        stock.setStock(stock.getStock()+ amount);
+        stockMapper.updateByPrimaryKeySelective(stock);
     }
 
     private void updateSkuAndStock(List<Sku> skus,Long id,boolean tag) {

@@ -5,6 +5,6 @@ import org.apache.ibatis.annotations.Select;
 import tk.mybatis.mapper.common.Mapper;
 
 public interface UserMapper extends Mapper<User> {
-    @Select("select * from tb_user where username=#{username} and password=#{password}")
-    User login(String username,String password);
+    /*@Select("select * from tb_user where username=#{username} and password=#{password}")
+    User login(String username,String password);*/
 }

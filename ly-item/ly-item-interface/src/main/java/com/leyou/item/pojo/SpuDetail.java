@@ -27,12 +27,11 @@ public class SpuDetail {
     /**
      * 商品特殊规格的名称及可选值模板
      */
-    @Column(name = "special_spec")
+    @Column(name = "spec_template")
     private String specTemplate;
     /**
      * 商品的全局规格属性
      */
-    @Column(name = "generic_spec")
     private String specifications;
     /**
      * 包装清单

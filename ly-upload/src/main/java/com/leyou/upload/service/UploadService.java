@@ -35,6 +35,7 @@ public class UploadService {
     private UploadProperties uploadProperties;
     public String uploadImage(MultipartFile file) {
         try {
+            String originalFilename = file.getOriginalFilename();
             //校验文件类型
             String contentType = file.getContentType();
             if(!uploadProperties.getAllowTypes().contains(contentType)){
@@ -50,6 +51,8 @@ public class UploadService {
             StorePath storePath = storageClient.uploadFile(file.getInputStream(), file.getSize(), extension, null);
             //返回路径
             return uploadProperties.getBaseUrl() + storePath.getFullPath();
+            /*file.transferTo(new File("D:\\leyou\\image" + originalFilename));
+            return "http://image.leyou.com" + originalFilename;*/
         } catch (IOException e) {
             //上传失败
             log.error("[文件上传] 上传文件失败!", e);

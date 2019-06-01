@@ -35,7 +35,12 @@ public class UserServiceImpl implements UserService {
       **/
     @Override
     public User login(String username, String password) {
-        User user = userMapper.login(username,password);
+        User record = new User();
+        record.setUsername(username);
+        User user = userMapper.selectOne(record);
+        if(user == null){
+            throw new LyException(ExceptionEnum.USER_NOT_FOUND);
+        }
         return user;
     }
 

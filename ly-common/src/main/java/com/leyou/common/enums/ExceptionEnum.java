@@ -31,6 +31,11 @@ public enum ExceptionEnum {
     STOCK_SAVE_ERROR(500,"库存信息添加失败!"),
     GOODS_SAVE_ERROR(500,"商品添加失败!"),
     USER_NOT_FOUND(404,"查询用户失败"),
+    MEMBER_NOT_FOUND(404,"查询会员失败!"),
+    MEMBER_SAVE_ERROR(500,"会员添加失败!"),
+    MEMBER_RANK_SAVE_ERROR(500,"新增中间表信息失败!"),
+    MEMBER_UPDATE_ERROR(500,"更新会员信息失败!"),
+    MEMBER_DELETE_ERROR(500,"删除会员失败!")
     ;
     private int code;
     private String msg;

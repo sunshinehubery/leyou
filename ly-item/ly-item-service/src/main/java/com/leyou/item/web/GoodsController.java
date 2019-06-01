@@ -1,10 +1,13 @@
 package com.leyou.item.web;
 
+import com.leyou.common.pojo.BrandQueryByPageParameter;
 import com.leyou.common.pojo.SpuQueryByPageParameter;
 import com.leyou.common.vo.PageResult;
+import com.leyou.item.bo.SkuBo;
 import com.leyou.item.bo.SpuBo;
 import com.leyou.item.pojo.Sku;
 import com.leyou.item.service.GoodsService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +42,17 @@ public class GoodsController {
             @RequestParam(value = "saleable", defaultValue = "true") Boolean saleable){
         SpuQueryByPageParameter spuQueryByPageParameter = new SpuQueryByPageParameter(page,rows,sortBy,desc,key,saleable);
         return ResponseEntity.ok(this.goodsService.querySpuByPageAndSort(spuQueryByPageParameter));
+    }
+
+    @GetMapping("sku/page")
+    public ResponseEntity<PageResult<SkuBo>> querySkuByPage(
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "rows", defaultValue = "5") Integer rows,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "desc", defaultValue = "false") Boolean desc,
+            @RequestParam(value = "key", required = false) String key){
+        BrandQueryByPageParameter brandQueryByPageParameter = new BrandQueryByPageParameter(page,rows,sortBy,desc,key);
+        return ResponseEntity.ok(goodsService.querySkuByPage(brandQueryByPageParameter));
     }
 
     /**
@@ -128,5 +142,31 @@ public class GoodsController {
             goodsService.deleteGoods(Long.parseLong(id));
         }
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @GetMapping("lessStock")
+    public ResponseEntity<List<SkuBo>> lessStock(){
+        return ResponseEntity.ok(goodsService.lessSku());
+    }
+
+    @GetMapping("notStock")
+    public ResponseEntity<List<SkuBo>> notStock(){
+        return ResponseEntity.ok(goodsService.notSku());
+    }
+
+    @GetMapping("needStock")
+    public ResponseEntity<List<SkuBo>> needStock(){
+        return ResponseEntity.ok(goodsService.needSku());
+    }
+
+    @GetMapping("getStock")
+    public ResponseEntity<SkuBo> getSkuBo(@Param("id") Long id){
+        return ResponseEntity.ok(goodsService.getSkuBo(id));
+    }
+
+    @PostMapping("purchase")
+    public ResponseEntity<Void> addPurchase(@RequestParam(value ="id") String id,@RequestParam(value = "stock") String stock){
+        goodsService.addPurchase(Long.parseLong(id),Long.parseLong(stock));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
